@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -49,17 +48,11 @@ func main(){
 }
 
 func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
-	request, err := http.NewRequest("GET", "https://api.spotify.com/v1/me/player/currently-playing", nil)
+	request, _ := http.NewRequest("GET", "https://api.spotify.com/v1/me/player/currently-playing", nil)
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", SpotiStruct.SpotiToken))
 	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Println(err)
-	}
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Println(err)
-	}
+	response, _ := client.Do(request)
+	body, _ := ioutil.ReadAll(response.Body)
 	var info interface{}
 	_ = json.Unmarshal(body, &info)
 	if info != nil {
@@ -109,15 +102,9 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 	"client_secret" : {"f27102cc5887410fb8250973cb0985ab"},
 	"code" : {SpotiStruct.SpotyAuthCode},
 	}
-	resp, err := http.PostForm("https://accounts.spotify.com/api/token",r)
-		if err != nil {
-		log.Println(err)
-	}
+	resp, _ := http.PostForm("https://accounts.spotify.com/api/token",r)
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil{
-		log.Println(err)
-	}
+	contents, _ := ioutil.ReadAll(resp.Body)
 	var auth interface{}
 	_ = json.Unmarshal(contents, &auth)
 	var SpotiStructGet SpotifyInfo
@@ -132,15 +119,9 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 				"client_secret" : {"f27102cc5887410fb8250973cb0985ab"},
 				"code" : {SpotiStruct.SpotyAuthCode},
 			}
-			resp, err := http.PostForm("https://accounts.spotify.com/api/token",r)
-			if err != nil {
-				log.Println(err)
-			}
+			resp, _ := http.PostForm("https://accounts.spotify.com/api/token",r)
 			defer resp.Body.Close()
-			contents, err := ioutil.ReadAll(resp.Body)
-			if err != nil{
-				log.Println(err)
-			}
+			contents, _ := ioutil.ReadAll(resp.Body)
 			var auth interface{}
 			_ = json.Unmarshal(contents, &auth)
 			SpotiStruct.SpotiRefreshCode = auth.(map[string]interface{})["refresh_token"].(string)
@@ -155,14 +136,8 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 }
 
 func VKQuery(SpotifyQuery string) interface{}{
-	resp, err := http.Get(fmt.Sprintf("https://api.vk.com/method/audio.search?q=%s&auto_complete=1&count=1&access_token=%s&v=5.1", SpotifyQuery, VKToken))
-	if err != nil {
-		log.Println(err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-	}
+	resp, _ := http.Get(fmt.Sprintf("https://api.vk.com/method/audio.search?q=%s&auto_complete=1&count=1&access_token=%s&v=5.1", SpotifyQuery, VKToken))
+	body, _ := ioutil.ReadAll(resp.Body)
 	var vkaudioget interface{}
 	_ = json.Unmarshal(body, &vkaudioget)
 	return vkaudioget.(map[string]interface{})["response"]

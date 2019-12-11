@@ -107,11 +107,8 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 	contents, _ := ioutil.ReadAll(resp.Body)
 	var auth interface{}
 	_ = json.Unmarshal(contents, &auth)
-	var SpotiStructGet SpotifyInfo
 	if auth.(map[string]interface{})["error"] != nil{
-		if auth.(map[string]interface{})["error_description"] != "Authorization code expired"{
-				panic(auth.(map[string]interface{})["error_description"])
-		}else if SpotiStructGet.SpotiRefreshCode != ""{
+		if SpotiStruct.SpotiRefreshCode != ""{
 			r := url.Values{
 				"grant_type" : {"refresh_token"},
 				"refresh_token" : {SpotiStruct.SpotiRefreshCode},
@@ -124,13 +121,11 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 			contents, _ := ioutil.ReadAll(resp.Body)
 			var auth interface{}
 			_ = json.Unmarshal(contents, &auth)
-			SpotiStruct.SpotiRefreshCode = auth.(map[string]interface{})["refresh_token"].(string)
 			SpotiStruct.SpotiToken = auth.(map[string]interface{})["access_token"].(string)
 		}else{
-			panic("Authorization code expired and refresh code missing.\n Try to paste new SpotiAuthCode.")
+			panic(auth.(map[string]interface{})["error_description"])
 		}
 	} else{
-		SpotiStruct.SpotiRefreshCode = auth.(map[string]interface{})["refresh_token"].(string)
 		SpotiStruct.SpotiToken = auth.(map[string]interface{})["access_token"].(string)
 	}
 }

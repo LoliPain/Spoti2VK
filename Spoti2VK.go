@@ -126,6 +126,7 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 			panic(auth.(map[string]interface{})["error_description"])
 		}
 	} else{
+		SpotiStruct.SpotiRefreshCode = auth.(map[string]interface{})["refresh_token"].(string)
 		SpotiStruct.SpotiToken = auth.(map[string]interface{})["access_token"].(string)
 	}
 }

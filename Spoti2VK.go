@@ -65,9 +65,9 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 				ArtistBuffer.WriteString(fmt.Sprintf("%s ", ArtistRow[i].(map[string]interface{})["name"].(string)))
 			}
 			Song := info.(map[string]interface{})["item"].(map[string]interface{})["name"].(string)
-			FullTitle := strings.ReplaceAll(fmt.Sprintf("%s %s", ArtistBuffer.String(), Song), " ", "%20")
+			FullTitle := strings.Replace(fmt.Sprintf("%s %s", ArtistBuffer.String(), Song), " ", "%20", -1)
 			if SpotiStruct.SpotiNowPlaying != FullTitle {
-				GetVKMusic(FullTitle, strings.ReplaceAll(Song, " ", "%20"))
+				GetVKMusic(FullTitle, strings.Replace(Song, " ", "%20", -1))
 				SpotiStruct.SpotiNowPlaying = FullTitle
 			}
 		}

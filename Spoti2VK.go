@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -33,14 +32,14 @@ const VKToken  = ""
 
 type SpotifyInfo struct {
 	SpotiToken string
-	SpotyAuthCode string
+	SpotiAuthCode string
 	SpotiRefreshCode string
 	SpotiNowPlaying string
 }
 
 func main(){
 	var SpotiStruct SpotifyInfo
-	SpotiStruct.SpotyAuthCode = SpotiAuthCode
+	SpotiStruct.SpotiAuthCode = SpotiAuthCode
 	for true {
 		SpotifyGetStatus(&SpotiStruct)
 		time.Sleep(10*(time.Second))
@@ -65,9 +64,9 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 				ArtistBuffer.WriteString(fmt.Sprintf("%s ", ArtistRow[i].(map[string]interface{})["name"].(string)))
 			}
 			Song := info.(map[string]interface{})["item"].(map[string]interface{})["name"].(string)
-			FullTitle := strings.Replace(fmt.Sprintf("%s %s", ArtistBuffer.String(), Song), " ", "%20", -1)
+			FullTitle := fmt.Sprintf("%s %s", ArtistBuffer.String(), Song)
 			if SpotiStruct.SpotiNowPlaying != FullTitle {
-				GetVKMusic(FullTitle, strings.Replace(Song, " ", "%20", -1))
+				GetVKMusic(FullTitle, Song)
 				SpotiStruct.SpotiNowPlaying = FullTitle
 			}
 		}
@@ -76,22 +75,29 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 
 func GetVKMusic(FullSpotifyTitle string, SongSpotifyOnly string) {
 	VKFullResponse := VKQuery(FullSpotifyTitle)
-	if VKFullResponse.(map[string]interface{})["count"].(float64) != 0 {
-		Id := VKFullResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["id"].(float64)
-		OwnerId := VKFullResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["owner_id"].(float64)
-		SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
-	} else{
-		VKTitleResponse := VKQuery(SongSpotifyOnly)
-		if VKTitleResponse.(map[string]interface{})["count"].(float64) != 0 {
-			Id := VKTitleResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["id"].(float64)
-			OwnerId := VKTitleResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["owner_id"].(float64)
+	if VKFullResponse != nil {
+		if VKFullResponse.(map[string]interface{})["count"].(float64) != 0 {
+			Id := VKFullResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["id"].(float64)
+			OwnerId := VKFullResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["owner_id"].(float64)
 			SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
+		} else {
+			VKTitleResponse := VKQuery(SongSpotifyOnly)
+			if VKTitleResponse.(map[string]interface{})["count"].(float64) != 0 {
+				Id := VKTitleResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["id"].(float64)
+				OwnerId := VKTitleResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["owner_id"].(float64)
+				SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
+			}
 		}
 	}
 }
 
 func SetVKStatus(AudioID string) {
-	http.Get(fmt.Sprintf("https://api.vk.com/method/audio.setBroadcast?audio=%s&access_token=%s&v=5.1", AudioID, VKToken))
+	r := url.Values{
+		"audio" : {AudioID},
+		"access_token" : {VKToken},
+		"v" : {"5.1"},
+	}
+	_, _ = http.Get("https://api.vk.com/method/audio.setBroadcast?" + r.Encode())
 }
 
 func (SpotiStruct *SpotifyInfo) GetNewToken() {
@@ -100,7 +106,7 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 	"redirect_uri" : {"https://example.com/callback"},
 	"client_id" : {"9f8b578a260549ab8338cf6263396975"},
 	"client_secret" : {"f27102cc5887410fb8250973cb0985ab"},
-	"code" : {SpotiStruct.SpotyAuthCode},
+	"code" : {SpotiStruct.SpotiAuthCode},
 	}
 	resp, _ := http.PostForm("https://accounts.spotify.com/api/token",r)
 	defer resp.Body.Close()
@@ -114,7 +120,7 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 				"refresh_token" : {SpotiStruct.SpotiRefreshCode},
 				"client_id" : {"9f8b578a260549ab8338cf6263396975"},
 				"client_secret" : {"f27102cc5887410fb8250973cb0985ab"},
-				"code" : {SpotiStruct.SpotyAuthCode},
+				"code" : {SpotiStruct.SpotiAuthCode},
 			}
 			resp, _ := http.PostForm("https://accounts.spotify.com/api/token",r)
 			defer resp.Body.Close()
@@ -132,7 +138,14 @@ func (SpotiStruct *SpotifyInfo) GetNewToken() {
 }
 
 func VKQuery(SpotifyQuery string) interface{}{
-	resp, _ := http.Get(fmt.Sprintf("https://api.vk.com/method/audio.search?q=%s&auto_complete=1&count=1&access_token=%s&v=5.1", SpotifyQuery, VKToken))
+	r := url.Values{
+		"q" : {SpotifyQuery},
+		"auto_complete" : {"1"},
+		"count" : {"1"},
+		"access_token" : {VKToken},
+		"v" : {"5.1"},
+	}
+	resp, _ := http.Get("https://api.vk.com/method/audio.search?" + r.Encode())
 	body, _ := ioutil.ReadAll(resp.Body)
 	var vkaudioget interface{}
 	_ = json.Unmarshal(body, &vkaudioget)

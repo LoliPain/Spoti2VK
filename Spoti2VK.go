@@ -21,13 +21,21 @@ const SpotiAuthCode = ""
 // В открывшейся ссылке, ищем code=
 // Копируем все символы идущие после code и до конца строки. Это и будет ваш SpotiAuthCode
 
-const VKToken  = ""
+const VKToken = ""
 
 // Для получения валидного токена, для работы с API методами категории audio, нам понадобится приложение, имеющее к нему доступ
 // Я использую токен от Kate Mobile, который получить можно здесь:
 // https://vkhost.github.io
-// Выбираете Kate Mobile в списке приложений, подтверждаете авторизацию через OAuth
+// Выбираете VK Admin (протестировано) в списке приложений, подтверждаете авторизацию через OAuth
 // Скопируйте часть адресной строки от access_token= до &expires_in в открывшейся вкладке
+
+const DebugMode = ""
+
+// Включает/Выключает режим отладки, необходимый для поиска багов с поиском и включением треков
+// Во включенном состоянии, перед тем, как попытаться поставить трек в статус, отправляет в консоль его название
+// В случае паника, при попытке поставить статус, последняя запись в nohup.out будет (в большинстве случаев)
+// Причиной его возникновения.
+// Для включения режима отладки, необходимо указать const DebugMode = "True"
 
 
 type SpotifyInfo struct {
@@ -66,6 +74,7 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 			Song := info.(map[string]interface{})["item"].(map[string]interface{})["name"].(string)
 			FullTitle := fmt.Sprintf("%s %s", ArtistBuffer.String(), Song)
 			if SpotiStruct.SpotiNowPlaying != FullTitle {
+				if DebugMode == "True"{fmt.Println(FullTitle)}
 				GetVKMusic(FullTitle, Song)
 				SpotiStruct.SpotiNowPlaying = FullTitle
 			}

@@ -11,7 +11,6 @@ import (
 	"time"
 )
 
-
 const SpotiAuthCode = ""
 
 // Как получить код первичной авторизации? Переходите по ссылке ниже:
@@ -37,20 +36,19 @@ const DebugMode = ""
 // Причиной его возникновения.
 // Для включения режима отладки, необходимо указать const DebugMode = "True"
 
-
 type SpotifyInfo struct {
-	SpotiToken string
-	SpotiAuthCode string
+	SpotiToken       string
+	SpotiAuthCode    string
 	SpotiRefreshCode string
-	SpotiNowPlaying string
+	SpotiNowPlaying  string
 }
 
-func main(){
+func main() {
 	var SpotiStruct SpotifyInfo
 	SpotiStruct.SpotiAuthCode = SpotiAuthCode
 	for true {
 		SpotifyGetStatus(&SpotiStruct)
-		time.Sleep(10*(time.Second))
+		time.Sleep(10 * (time.Second))
 	}
 }
 
@@ -63,18 +61,21 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 	var info interface{}
 	_ = json.Unmarshal(body, &info)
 	if info != nil {
-		if info.(map[string]interface{})["error"] != nil {
+		info := info.(map[string]interface{})
+		if info["error"] != nil {
 			SpotiStruct.GetNewToken()
-		} else if info.(map[string]interface{})["item"] != nil {
-			ArtistRow := info.(map[string]interface{})["item"].(map[string]interface{})["album"].(map[string]interface{})["artists"].([]interface{})
+		} else if info["item"] != nil {
+			ArtistRow := info["item"].(map[string]interface{})["album"].(map[string]interface{})["artists"].([]interface{})
 			ArtistBuffer := bytes.Buffer{}
 			for i := range ArtistRow {
 				ArtistBuffer.WriteString(fmt.Sprintf("%s ", ArtistRow[i].(map[string]interface{})["name"].(string)))
 			}
-			Song := info.(map[string]interface{})["item"].(map[string]interface{})["name"].(string)
+			Song := info["item"].(map[string]interface{})["name"].(string)
 			FullTitle := fmt.Sprintf("%s %s", ArtistBuffer.String(), Song)
 			if SpotiStruct.SpotiNowPlaying != FullTitle {
-				if DebugMode == "True"{fmt.Println(FullTitle)}
+				if DebugMode == "True" {
+					fmt.Println(FullTitle)
+				}
 				GetVKMusic(FullTitle, Song)
 				SpotiStruct.SpotiNowPlaying = FullTitle
 			}
@@ -85,15 +86,19 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 func GetVKMusic(FullSpotifyTitle string, SongSpotifyOnly string) {
 	VKFullResponse := VKQuery(FullSpotifyTitle)
 	if VKFullResponse != nil {
-		if VKFullResponse.(map[string]interface{})["count"].(float64) != 0 {
-			Id := VKFullResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["id"].(float64)
-			OwnerId := VKFullResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["owner_id"].(float64)
+		response := VKFullResponse.(map[string]interface{})
+		items := response["items"].([]interface{})[0].(map[string]interface{})
+		if response["count"].(float64) != 0 {
+			Id := items["id"].(float64)
+			OwnerId := items["owner_id"].(float64)
 			SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
 		} else {
 			VKTitleResponse := VKQuery(SongSpotifyOnly)
-			if VKTitleResponse.(map[string]interface{})["count"].(float64) != 0 {
-				Id := VKTitleResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["id"].(float64)
-				OwnerId := VKTitleResponse.(map[string]interface{})["items"].([]interface{})[0].(map[string]interface{})["owner_id"].(float64)
+			response := VKTitleResponse.(map[string]interface{})
+			items := response["items"].([]interface{})[0].(map[string]interface{})
+			if response["count"].(float64) != 0 {
+				Id := items["id"].(float64)
+				OwnerId := items["owner_id"].(float64)
 				SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
 			}
 		}
@@ -102,57 +107,57 @@ func GetVKMusic(FullSpotifyTitle string, SongSpotifyOnly string) {
 
 func SetVKStatus(AudioID string) {
 	r := url.Values{
-		"audio" : {AudioID},
-		"access_token" : {VKToken},
-		"v" : {"5.1"},
+		"audio":        {AudioID},
+		"access_token": {VKToken},
+		"v":            {"5.1"},
 	}
 	_, _ = http.Get("https://api.vk.com/method/audio.setBroadcast?" + r.Encode())
 }
 
 func (SpotiStruct *SpotifyInfo) GetNewToken() {
 	r := url.Values{
-	"grant_type" : {"authorization_code"},
-	"redirect_uri" : {"https://example.com/callback"},
-	"client_id" : {"9f8b578a260549ab8338cf6263396975"},
-	"client_secret" : {"f27102cc5887410fb8250973cb0985ab"},
-	"code" : {SpotiStruct.SpotiAuthCode},
+		"grant_type":    {"authorization_code"},
+		"redirect_uri":  {"https://example.com/callback"},
+		"client_id":     {"9f8b578a260549ab8338cf6263396975"},
+		"client_secret": {"f27102cc5887410fb8250973cb0985ab"},
+		"code":          {SpotiStruct.SpotiAuthCode},
 	}
-	resp, _ := http.PostForm("https://accounts.spotify.com/api/token",r)
+	resp, _ := http.PostForm("https://accounts.spotify.com/api/token", r)
 	defer resp.Body.Close()
 	contents, _ := ioutil.ReadAll(resp.Body)
 	var auth interface{}
 	_ = json.Unmarshal(contents, &auth)
-	if auth.(map[string]interface{})["error"] != nil{
-		if SpotiStruct.SpotiRefreshCode != ""{
+	if auth.(map[string]interface{})["error"] != nil {
+		if SpotiStruct.SpotiRefreshCode != "" {
 			r := url.Values{
-				"grant_type" : {"refresh_token"},
-				"refresh_token" : {SpotiStruct.SpotiRefreshCode},
-				"client_id" : {"9f8b578a260549ab8338cf6263396975"},
-				"client_secret" : {"f27102cc5887410fb8250973cb0985ab"},
-				"code" : {SpotiStruct.SpotiAuthCode},
+				"grant_type":    {"refresh_token"},
+				"refresh_token": {SpotiStruct.SpotiRefreshCode},
+				"client_id":     {"9f8b578a260549ab8338cf6263396975"},
+				"client_secret": {"f27102cc5887410fb8250973cb0985ab"},
+				"code":          {SpotiStruct.SpotiAuthCode},
 			}
-			resp, _ := http.PostForm("https://accounts.spotify.com/api/token",r)
+			resp, _ := http.PostForm("https://accounts.spotify.com/api/token", r)
 			defer resp.Body.Close()
 			contents, _ := ioutil.ReadAll(resp.Body)
 			var auth interface{}
 			_ = json.Unmarshal(contents, &auth)
 			SpotiStruct.SpotiToken = auth.(map[string]interface{})["access_token"].(string)
-		}else{
+		} else {
 			panic(auth.(map[string]interface{})["error_description"])
 		}
-	} else{
+	} else {
 		SpotiStruct.SpotiRefreshCode = auth.(map[string]interface{})["refresh_token"].(string)
 		SpotiStruct.SpotiToken = auth.(map[string]interface{})["access_token"].(string)
 	}
 }
 
-func VKQuery(SpotifyQuery string) interface{}{
+func VKQuery(SpotifyQuery string) interface{} {
 	r := url.Values{
-		"q" : {SpotifyQuery},
-		"auto_complete" : {"1"},
-		"count" : {"1"},
-		"access_token" : {VKToken},
-		"v" : {"5.1"},
+		"q":             {SpotifyQuery},
+		"auto_complete": {"1"},
+		"count":         {"1"},
+		"access_token":  {VKToken},
+		"v":             {"5.1"},
 	}
 	resp, _ := http.Get("https://api.vk.com/method/audio.search?" + r.Encode())
 	body, _ := ioutil.ReadAll(resp.Body)

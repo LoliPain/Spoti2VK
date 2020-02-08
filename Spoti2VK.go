@@ -87,16 +87,16 @@ func GetVKMusic(FullSpotifyTitle string, SongSpotifyOnly string) {
 	VKFullResponse := VKQuery(FullSpotifyTitle)
 	if VKFullResponse != nil {
 		response := VKFullResponse.(map[string]interface{})
-		items := response["items"].([]interface{})[0].(map[string]interface{})
-		if response["count"].(float64) != 0 {
+		if response["count"].(float64) != 0 && len(response["items"].([]interface{})) != 0 {
+			items := response["items"].([]interface{})[0].(map[string]interface{})
 			Id := items["id"].(float64)
 			OwnerId := items["owner_id"].(float64)
 			SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
 		} else {
 			VKTitleResponse := VKQuery(SongSpotifyOnly)
 			response := VKTitleResponse.(map[string]interface{})
-			items := response["items"].([]interface{})[0].(map[string]interface{})
-			if response["count"].(float64) != 0 {
+			if response["count"].(float64) != 0 && len(response["items"].([]interface{})) != 0 {
+				items := response["items"].([]interface{})[0].(map[string]interface{})
 				Id := items["id"].(float64)
 				OwnerId := items["owner_id"].(float64)
 				SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))

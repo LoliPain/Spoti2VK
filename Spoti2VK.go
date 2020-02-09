@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/p2love/GoFrequency/GoFrequency"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 )
 
@@ -88,18 +88,12 @@ func GetVKMusic(FullSpotifyTitle string, SongSpotifyOnly string) {
 	if VKFullResponse != nil {
 		response := VKFullResponse.(map[string]interface{})
 		if response["count"].(float64) != 0 && len(response["items"].([]interface{})) != 0 {
-			items := response["items"].([]interface{})[0].(map[string]interface{})
-			Id := items["id"].(float64)
-			OwnerId := items["owner_id"].(float64)
-			SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
+			SetVKStatus(SongChoose(response, FullSpotifyTitle))
 		} else {
 			VKTitleResponse := VKQuery(SongSpotifyOnly)
 			response := VKTitleResponse.(map[string]interface{})
 			if response["count"].(float64) != 0 && len(response["items"].([]interface{})) != 0 {
-				items := response["items"].([]interface{})[0].(map[string]interface{})
-				Id := items["id"].(float64)
-				OwnerId := items["owner_id"].(float64)
-				SetVKStatus(fmt.Sprintf("%s_%s", strconv.Itoa(int(OwnerId)), strconv.Itoa(int(Id))))
+				SetVKStatus(SongChoose(response, FullSpotifyTitle))
 			}
 		}
 	}
@@ -155,7 +149,7 @@ func VKQuery(SpotifyQuery string) interface{} {
 	r := url.Values{
 		"q":             {SpotifyQuery},
 		"auto_complete": {"1"},
-		"count":         {"1"},
+		"count":         {"10"},
 		"access_token":  {VKToken},
 		"v":             {"5.1"},
 	}
@@ -164,4 +158,18 @@ func VKQuery(SpotifyQuery string) interface{} {
 	var vkaudioget interface{}
 	_ = json.Unmarshal(body, &vkaudioget)
 	return vkaudioget.(map[string]interface{})["response"]
+}
+
+func SongChoose(response map[string]interface{}, status string) string {
+	var score float64
+	var set string
+	for _, items := range response["items"].([]interface{}) {
+		items := items.(map[string]interface{})
+		responseTitle := fmt.Sprintf("%s %s", items["artist"], items["title"])
+		if GoFrequency.Score(GoFrequency.Map(responseTitle), GoFrequency.Map(status)) > score {
+			score = GoFrequency.Score(GoFrequency.Map(responseTitle), GoFrequency.Map(status))
+			set = fmt.Sprintf("%f_%f", items["owner_id"].(float64), items["id"].(float64))
+		}
+	}
+	return set
 }

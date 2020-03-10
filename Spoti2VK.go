@@ -38,6 +38,7 @@ const DebugMode = ""
 // Для включения режима отладки, необходимо указать const DebugMode = "True"
 
 var vkUserId = GetVKId()
+
 const SendDailyStatusReport = ""
 
 // Включает/Выключает отправку NowPlaying для создания историй с последними прослушанными аудио в сервисе VK
@@ -85,7 +86,7 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 				if DebugMode == "True" {
 					fmt.Println(FullTitle)
 				}
-				if SendDailyStatusReport == "True"{
+				if SendDailyStatusReport == "True" {
 					SendDailyStatus(vkUserId)
 				}
 				GetVKMusic(FullTitle, Song)
@@ -186,17 +187,17 @@ func SongChoose(response map[string]interface{}, status string) string {
 	return set
 }
 
-func GetVKId() string{
+func GetVKId() string {
 	k := url.Values{
-		"access_token":  {VKToken},
-		"v":             {"5.100"},
+		"access_token": {VKToken},
+		"v":            {"5.100"},
 	}
 	vkGetUser, _ := http.Get("https://api.vk.com/method/users.get?" + k.Encode())
 	body, _ := ioutil.ReadAll(vkGetUser.Body)
 	var vkJsonUser interface{}
 	var vkUserId float64
 	_ = json.Unmarshal(body, &vkJsonUser)
-	for _, g := range vkJsonUser.(map[string]interface{})["response"].([]interface{}){
+	for _, g := range vkJsonUser.(map[string]interface{})["response"].([]interface{}) {
 		vkUserId = g.(map[string]interface{})["id"].(float64)
 	}
 	return strconv.Itoa(int(vkUserId))
@@ -205,7 +206,7 @@ func GetVKId() string{
 func SendDailyStatus(id string) {
 	o := url.Values{
 		"user_id": {id},
-		"stamp": {strconv.Itoa(int(time.Now().Unix()))},
+		"stamp":   {strconv.Itoa(int(time.Now().Unix()))},
 	}
 	_, _ = http.Get("https://worstin.me:5000/spoti2vk/api/add?" + o.Encode())
 }

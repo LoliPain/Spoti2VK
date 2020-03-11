@@ -86,10 +86,10 @@ func SpotifyGetStatus(SpotiStruct *SpotifyInfo) {
 				if DebugMode == "True" {
 					fmt.Println(FullTitle)
 				}
+				GetVKMusic(FullTitle, Song)
 				if SendDailyStatusReport == "True" {
 					SendDailyStatus(vkUserId)
 				}
-				GetVKMusic(FullTitle, Song)
 				SpotiStruct.SpotiNowPlaying = FullTitle
 			}
 		}

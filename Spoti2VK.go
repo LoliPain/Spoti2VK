@@ -162,7 +162,7 @@ func VKQuery(SpotifyQuery string) interface{} {
 	r := url.Values{
 		"q":             {SpotifyQuery},
 		"auto_complete": {"1"},
-		"count":         {"4"},
+		"count":         {"10"},
 		"access_token":  {VKToken},
 		"v":             {"5.1"},
 	}

@@ -116,7 +116,7 @@ func SetVKStatus(AudioID string) {
 	r := url.Values{
 		"audio":        {AudioID},
 		"access_token": {VKToken},
-		"v":            {"5.1"},
+		"v":            {"5.100"},
 	}
 	_, _ = http.Get("https://api.vk.com/method/audio.setBroadcast?" + r.Encode())
 }
@@ -164,7 +164,7 @@ func VKQuery(SpotifyQuery string) interface{} {
 		"auto_complete": {"1"},
 		"count":         {"10"},
 		"access_token":  {VKToken},
-		"v":             {"5.1"},
+		"v":             {"5.100"},
 	}
 	resp, _ := http.Get("https://api.vk.com/method/audio.search?" + r.Encode())
 	body, _ := ioutil.ReadAll(resp.Body)
